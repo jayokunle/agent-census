@@ -6,11 +6,13 @@ import { claudeCodeAdapter } from "@semantik-tech/adapters-claude-code";
 import { codexAdapter } from "@semantik-tech/adapters-codex";
 import { copilotCliAdapter } from "@semantik-tech/adapters-copilot-cli";
 import { cursorAdapter } from "@semantik-tech/adapters-cursor";
+import { antigravityAdapter } from "@semantik-tech/adapters-antigravity";
 import { geminiCliAdapter } from "@semantik-tech/adapters-gemini-cli";
+import { opencodeAdapter } from "@semantik-tech/adapters-opencode";
 import { vscodeAdapter } from "@semantik-tech/adapters-vscode";
 import {
-  geminiSharedMcpConfigPath,
   nativePaths,
+  parseJsonc,
   resolveHome,
   type ClientTargetAdapter,
   type McpServerFragment,
@@ -42,7 +44,7 @@ export interface InventoryMcpServer {
   envKeys: string[];
   /** http/sse only; values redacted when credential-shaped. */
   headers?: Record<string, string>;
-  /** File this server was read from (Gemini merges two). */
+  /** File this server was read from. */
   configPath: string;
 }
 
@@ -79,9 +81,11 @@ const ADAPTERS: Record<ClientTarget, ClientTargetAdapter> = {
   cursor: cursorAdapter,
   "claude-code": claudeCodeAdapter,
   "gemini-cli": geminiCliAdapter,
+  antigravity: antigravityAdapter,
   vscode: vscodeAdapter,
   "copilot-cli": copilotCliAdapter,
   codex: codexAdapter,
+  opencode: opencodeAdapter,
 };
 
 function hostPlatform(): InventoryReport["platform"] {
@@ -118,42 +122,13 @@ export function clientPaths(clientTarget: ClientTarget, home: string) {
   if (clientTarget === "vscode" && platform === "linux") {
     mcpConfigFile = join(home, ".config", "Code", "User", "mcp.json");
   }
-  return {
-    mcpConfigFile,
-    skillsRoot: rebase(native.skillsRoot),
-    sharedMcpConfigFile:
-      clientTarget === "gemini-cli" ? rebase(geminiSharedMcpConfigPath(os)) : undefined,
-  };
+  return { mcpConfigFile, skillsRoot: rebase(native.skillsRoot) };
 }
 
 type ReadResult =
   | { found: false }
   | { found: true; value: Record<string, unknown> }
   | { found: true; warning: string };
-
-function stripJsonComments(text: string): string {
-  // String-aware removal of // and /* */ comments and trailing commas (JSONC,
-  // which VS Code and Gemini accept).
-  let out = "";
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === '"') {
-      const start = i;
-      for (i++; i < text.length && text[i] !== '"'; i++) if (text[i] === "\\") i++;
-      out += text.slice(start, i + 1);
-    } else if (ch === "/" && text[i + 1] === "/") {
-      while (i < text.length && text[i] !== "\n") i++;
-      out += "\n";
-    } else if (ch === "/" && text[i + 1] === "*") {
-      i = text.indexOf("*/", i + 2);
-      if (i === -1) break;
-      i++;
-    } else {
-      out += ch;
-    }
-  }
-  return out.replace(/,(\s*[}\]])/g, "$1");
-}
 
 async function readConfig(path: string, format: "json" | "toml"): Promise<ReadResult> {
   let raw: string;
@@ -169,13 +144,7 @@ async function readConfig(path: string, format: "json" | "toml"): Promise<ReadRe
     const value =
       format === "toml"
         ? getStaticTOMLValue(parseTOML(raw))
-        : (() => {
-            try {
-              return JSON.parse(raw);
-            } catch {
-              return JSON.parse(stripJsonComments(raw));
-            }
-          })();
+        : parseJsonc(raw); // JSONC: VS Code, OpenCode and Gemini accept comments and trailing commas
     if (value && typeof value === "object" && !Array.isArray(value)) {
       return { found: true, value: value as Record<string, unknown> };
     }
@@ -263,18 +232,8 @@ async function scanClientTarget(clientTarget: ClientTarget, home: string): Promi
   const warnings: string[] = [];
   const primary = await readConfig(paths.mcpConfigFile, clientTarget === "codex" ? "toml" : "json");
   const byId = new Map<string, InventoryMcpServer>();
-  let configFound = primary.found;
+  const configFound = primary.found;
 
-  // Gemini: shared Antigravity config first, settings.json wins on id clash
-  // (same precedence as the managed scanner).
-  if (paths.sharedMcpConfigFile) {
-    const shared = await readConfig(paths.sharedMcpConfigFile, "json");
-    configFound ||= shared.found;
-    if (shared.found && "warning" in shared) warnings.push(shared.warning);
-    if (shared.found && "value" in shared) {
-      for (const s of parseServers(clientTarget, shared.value, paths.sharedMcpConfigFile, warnings)) byId.set(s.id, s);
-    }
-  }
   if (primary.found && "warning" in primary) warnings.push(primary.warning);
   if (primary.found && "value" in primary) {
     for (const s of parseServers(clientTarget, primary.value, paths.mcpConfigFile, warnings)) byId.set(s.id, s);

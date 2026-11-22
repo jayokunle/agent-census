@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "filesystem-spike": {
+      "command": "npx.cmd",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Public\\mcp-enterprise-spike"],
+      "env": {},
+      "timeoutSeconds": 30
+    },
+    "org-proxy-example": {
+      "serverUrl": "https://mcp.example.com/org/acme/filesystem-spike",
+      "headers": {
+        "Authorization": "Bearer $MCP_ENTERPRISE_TOKEN"
+      },
+      "disabledTools": ["delete_file"]
+    }
+  }
+}

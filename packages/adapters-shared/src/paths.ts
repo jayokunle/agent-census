@@ -34,6 +34,14 @@ export function nativePaths(clientTarget: ClientTarget, os: TargetOs): NativePat
         mcpConfigFile: join(home, ".gemini", "settings.json"),
         skillsRoot: join(home, ".gemini", "skills"),
       };
+    case "antigravity":
+      // Shared by the Antigravity IDE, App and CLI (https://antigravity.google/docs/mcp, /docs/skills).
+      return {
+        os,
+        home,
+        mcpConfigFile: join(home, ".gemini", "config", "mcp_config.json"),
+        skillsRoot: join(home, ".gemini", "config", "skills"),
+      };
     case "vscode":
       return {
         os,
@@ -55,6 +63,16 @@ export function nativePaths(clientTarget: ClientTarget, os: TargetOs): NativePat
         mcpConfigFile: join(home, ".codex", "config.toml"),
         skillsRoot: join(home, ".agents", "skills"),
       };
+    case "opencode":
+      // https://opencode.ai/docs/config/ — `opencode.json(c)`; OpenCode merges both if present.
+      // ponytail: XDG-style ~/.config on Windows too (OpenCode resolves it with xdg-basedir; the
+      // docs give no Windows path). Servers a member keeps in opencode.jsonc are not inventoried.
+      return {
+        os,
+        home,
+        mcpConfigFile: join(home, ".config", "opencode", "opencode.json"),
+        skillsRoot: join(home, ".config", "opencode", "skills"),
+      };
     default:
       throw new Error(`Client Target adapter not implemented: ${clientTarget}`);
   }
@@ -66,12 +84,6 @@ function vscodeMcpConfigFile(home: string, os: TargetOs): string {
     return join(appData, "Code", "User", "mcp.json");
   }
   return join(home, "Library", "Application Support", "Code", "User", "mcp.json");
-}
-
-/** Antigravity shared MCP config (inventory only in v1). */
-export function geminiSharedMcpConfigPath(os: TargetOs): string {
-  const home = resolveHome(os);
-  return join(home, ".gemini", "config", "mcp_config.json");
 }
 
 export function npxCommand(os: TargetOs): string {

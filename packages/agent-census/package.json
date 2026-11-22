@@ -1,7 +1,7 @@
 {
   "name": "agent-census",
   "version": "0.1.1",
-  "description": "See what your AI coding agents are configured with: every MCP server and skill pack across Cursor, Claude Code, Gemini CLI, VS Code, Copilot CLI and Codex. Read-only, offline.",
+  "description": "See what your AI coding agents are configured with: every MCP server and skill pack across Cursor, Claude Code, Antigravity, Gemini CLI, VS Code, Copilot CLI, Codex and OpenCode. Read-only, offline.",
   "keywords": [
     "ai-agents",
     "coding-agents",
@@ -13,9 +13,11 @@
     "cursor",
     "claude-code",
     "gemini-cli",
+    "antigravity",
     "vscode",
     "copilot",
-    "codex"
+    "codex",
+    "opencode"
   ],
   "license": "MIT",
   "author": "JAyokunle Enterprise UG",
@@ -53,7 +55,9 @@
     "@semantik-tech/adapters-codex": "*",
     "@semantik-tech/adapters-copilot-cli": "*",
     "@semantik-tech/adapters-cursor": "*",
+    "@semantik-tech/adapters-antigravity": "*",
     "@semantik-tech/adapters-gemini-cli": "*",
+    "@semantik-tech/adapters-opencode": "*",
     "@semantik-tech/adapters-shared": "*",
     "@semantik-tech/adapters-vscode": "*",
     "@semantik-tech/manifest-schema": "*",

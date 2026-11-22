@@ -20,12 +20,16 @@ export function fixturePath(clientTarget: ClientTarget, os: TargetOs): string {
       return join(base, "claude-mcp-user.json");
     case "gemini-cli":
       return join(base, "settings.json");
+    case "antigravity":
+      return join(base, "mcp_config.json");
     case "vscode":
       return join(base, "mcp.json");
     case "copilot-cli":
       return join(base, "mcp-config.json");
     case "codex":
       return join(base, "config.toml");
+    case "opencode":
+      return join(base, "opencode.json");
     default:
       throw new Error(`No fixture for Client Target: ${clientTarget}`);
   }

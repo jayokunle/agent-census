@@ -9,6 +9,8 @@
     "packages/adapters-cursor",
     "packages/adapters-claude-code",
     "packages/adapters-gemini-cli",
+    "packages/adapters-antigravity",
+    "packages/adapters-opencode",
     "packages/adapters-vscode",
     "packages/adapters-copilot-cli",
     "packages/adapters-codex",
