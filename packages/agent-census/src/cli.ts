@@ -21,16 +21,18 @@ const CLIENT_LABELS: Record<ClientTarget, string> = {
   cursor: "Cursor",
   "claude-code": "Claude Code",
   "gemini-cli": "Gemini CLI",
+  antigravity: "Antigravity",
   vscode: "VS Code",
   "copilot-cli": "Copilot CLI",
   codex: "Codex",
+  opencode: "OpenCode",
 };
 
 const HELP = `Usage: ${CLI_NAME} [options]
 
 See what the AI coding agents on this machine are configured with: every MCP
-server and skill pack across Cursor, Claude Code, Gemini CLI, VS Code,
-Copilot CLI and Codex. Read-only, no network, no account.
+server and skill pack across Cursor, Claude Code, Antigravity, Gemini CLI,
+VS Code, Copilot CLI, Codex and OpenCode. Read-only, no network, no account.
 
 Options:
   --json           Print a machine-readable report (schemaVersion 1)

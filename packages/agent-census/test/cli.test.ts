@@ -33,13 +33,13 @@ const VSCODE_MCP = {
 const LAYOUT: Record<string, { from: string; to: string[] }[]> = {
   cursor: [{ from: "cursor/mcp.json", to: [".cursor", "mcp.json"] }],
   "claude-code": [{ from: "claude/claude-mcp-user.json", to: [".claude.json"] }],
-  "gemini-cli": [
-    { from: "gemini/settings.json", to: [".gemini", "settings.json"] },
-    { from: "gemini/mcp_config.shared.json", to: [".gemini", "config", "mcp_config.json"] },
-  ],
+  "gemini-cli": [{ from: "gemini/settings.json", to: [".gemini", "settings.json"] }],
+  antigravity: [{ from: "antigravity/mcp_config.json", to: [".gemini", "config", "mcp_config.json"] }],
   vscode: [{ from: "vscode/mcp.json", to: VSCODE_MCP }],
   "copilot-cli": [{ from: "copilot-cli/mcp-config.json", to: [".copilot", "mcp-config.json"] }],
   codex: [{ from: "codex/config.toml", to: [".codex", "config.toml"] }],
+  // A JSONC file (comments, trailing commas), as OpenCode's own examples write it.
+  opencode: [{ from: "opencode/opencode.json", to: [".config", "opencode", "opencode.json"] }],
 };
 
 async function place(home: string, to: string[], content: string | Buffer): Promise<string> {
@@ -86,7 +86,7 @@ async function treeDigest(root: string): Promise<string> {
   return hash.digest("hex");
 }
 
-test("all six clients present: JSON shape, counts and redaction", async () => {
+test("all clients present: JSON shape, counts and redaction", async () => {
   const home = await fixtureHome();
   await cp(join(REPO_ROOT, "fixtures", "skill-packs", "demo-pack"), join(home, ".cursor", "skills", "demo-pack"), { recursive: true });
   await cp(join(REPO_ROOT, "fixtures", "skill-packs", "demo-caller"), join(home, ".agents", "skills", "demo-caller"), { recursive: true });
@@ -104,13 +104,15 @@ test("all six clients present: JSON shape, counts and redaction", async () => {
     [
       ["cursor", true, 2],
       ["claude-code", true, 2],
-      ["gemini-cli", true, 3],
+      ["gemini-cli", true, 2],
+      ["antigravity", true, 2],
       ["vscode", true, 2],
       ["copilot-cli", true, 2],
       ["codex", true, 2],
+      ["opencode", true, 2],
     ],
   );
-  assert.deepEqual(report.totals, { mcpServers: 13, clientTargets: 6, skillPacks: 2 });
+  assert.deepEqual(report.totals, { mcpServers: 16, clientTargets: 8, skillPacks: 2 });
 
   const cursor = client(report, "cursor");
   assert.equal(cursor.configPath, join(home, ".cursor", "mcp.json"));
@@ -141,14 +143,14 @@ test("human output groups by client and ends with the totals line", async () => 
   const home = await fixtureHome();
   const { code, stdout } = await cli(["--home", home]);
   assert.equal(code, 0);
-  for (const label of ["Cursor", "Claude Code", "Gemini CLI", "VS Code", "Copilot CLI", "Codex"]) {
+  for (const label of ["Cursor", "Claude Code", "Gemini CLI", "Antigravity", "VS Code", "Copilot CLI", "Codex", "OpenCode"]) {
     assert.match(stdout, new RegExp(`^${label}$`, "m"));
   }
   assert.match(stdout, /^ {2}config: ~[/\\]\.cursor[/\\]mcp\.json$/m);
   assert.match(stdout, /filesystem-spike {2}stdio {2}npx/);
   assert.match(stdout, /Authorization: \[redacted\]/);
   assert.doesNotMatch(stdout, /Bearer/);
-  assert.ok(stdout.endsWith("13 MCP servers across 6 tools, 0 skill packs.\n"));
+  assert.ok(stdout.endsWith("16 MCP servers across 8 tools, 0 skill packs.\n"));
 });
 
 test("no clients present: exit 0 with a friendly message", async () => {
@@ -160,7 +162,7 @@ test("no clients present: exit 0 with a friendly message", async () => {
   const json = await cli(["--home", home, "--json"]);
   assert.equal(json.code, 0);
   const report = json.json();
-  assert.equal(report.clientTargets.length, 6);
+  assert.equal(report.clientTargets.length, 8);
   assert.ok(report.clientTargets.every((c) => !c.present && !c.configFound));
   assert.deepEqual(report.totals, { mcpServers: 0, clientTargets: 0, skillPacks: 0 });
 });
@@ -234,27 +236,20 @@ test("Codex TOML: stdio and http servers parsed; malformed TOML warns", async ()
   assert.match(broken.stderr, /config\.toml: not valid TOML; skipped/);
 });
 
-test("Gemini shared config path is scanned; settings.json wins on id clash", async () => {
+test("Antigravity's mcp_config.json is its own client, not folded into Gemini CLI", async () => {
   const home = await tempHome();
-  const sharedPath = await place(
+  const path = await place(
     home,
     [".gemini", "config", "mcp_config.json"],
-    JSON.stringify({ mcpServers: { "next-devtools": { command: "npx" }, dup: { command: "from-shared" } } }),
+    JSON.stringify({ mcpServers: { "next-devtools": { command: "npx" }, remote: { serverUrl: "https://x.example/mcp" } } }),
   );
-  const onlyShared = client((await cli(["--home", home, "--json"])).json(), "gemini-cli");
-  assert.equal(onlyShared.present, true);
-  assert.equal(onlyShared.mcpServers.length, 2);
-  assert.equal(onlyShared.mcpServers[0].configPath, sharedPath);
-
-  const settingsPath = await place(
-    home,
-    [".gemini", "settings.json"],
-    JSON.stringify({ mcpServers: { dup: { command: "from-settings" } } }),
-  );
-  const merged = client((await cli(["--home", home, "--json"])).json(), "gemini-cli");
-  const dup = merged.mcpServers.find((s) => s.id === "dup");
-  assert.equal(dup?.command, "from-settings");
-  assert.equal(dup?.configPath, settingsPath);
+  const report = (await cli(["--home", home, "--json"])).json();
+  const antigravity = client(report, "antigravity");
+  assert.deepEqual(antigravity.mcpServers.map((s) => [s.id, s.transport, s.configPath]), [
+    ["next-devtools", "stdio", path],
+    ["remote", "http", path],
+  ]);
+  assert.equal(client(report, "gemini-cli").present, false);
 });
 
 test("env values never reach stdout; key names do", async () => {
@@ -309,7 +304,7 @@ test("bundle: single file, no workspace or network imports, runs under node", as
 
   const home = await fixtureHome();
   const { stdout } = await exec(process.execPath, [bundle, "--home", home, "--json"]);
-  assert.equal((JSON.parse(stdout) as InventoryReport).totals.mcpServers, 13);
+  assert.equal((JSON.parse(stdout) as InventoryReport).totals.mcpServers, 16);
 
   const empty = await exec(process.execPath, [bundle, "--home", await tempHome()]);
   assert.equal(empty.stdout, "No AI coding tools detected.\n");

@@ -1,8 +1,8 @@
 # agent-census
 
 See what the AI coding agents on your machine are configured with. It lists
-every **MCP server** and **skill pack** across Cursor, Claude Code, Gemini CLI,
-VS Code, Copilot CLI and Codex, in one command.
+every **MCP server** and **skill pack** across Cursor, Claude Code, Antigravity,
+Gemini CLI, VS Code, Copilot CLI, Codex and OpenCode, in one command.
 
 ```sh
 npx agent-census
@@ -44,7 +44,7 @@ Requires Node.js 20 or later.
 | --- | --- |
 | `--json` | Print the machine-readable report described below |
 | `--home <path>` | Scan this directory as if it were your home directory |
-| `--target <id>` | Scan one client: `cursor`, `claude-code`, `gemini-cli`, `vscode`, `copilot-cli`, `codex` |
+| `--target <id>` | Scan one client: `cursor`, `claude-code`, `gemini-cli`, `antigravity`, `vscode`, `copilot-cli`, `codex`, `opencode` |
 | `--version` | Print the version |
 | `--help` | Print usage |
 
@@ -59,10 +59,12 @@ Paths are relative to your home directory (`%USERPROFILE%` on Windows).
 | --- | --- | --- |
 | Cursor | `.cursor/mcp.json` | `.cursor/skills/*/SKILL.md` |
 | Claude Code | `.claude.json` (user-scope `mcpServers`) | `.claude/skills/*/SKILL.md` |
-| Gemini CLI | `.gemini/settings.json`, plus `.gemini/config/mcp_config.json` | `.gemini/skills/*/SKILL.md` |
+| Antigravity (IDE, App, `agy` CLI) | `.gemini/config/mcp_config.json` | `.gemini/config/skills/*/SKILL.md` |
+| Gemini CLI (deprecated by Google) | `.gemini/settings.json` | `.gemini/skills/*/SKILL.md` |
 | VS Code | macOS `Library/Application Support/Code/User/mcp.json`<br>Windows `%APPDATA%\Code\User\mcp.json`<br>Linux `.config/Code/User/mcp.json` | `.copilot/skills/*/SKILL.md` |
 | Copilot CLI | `.copilot/mcp-config.json` | `.copilot/skills/*/SKILL.md` |
 | Codex | `.codex/config.toml` | `.agents/skills/*/SKILL.md` |
+| OpenCode | `.config/opencode/opencode.json` (`mcp.servers`) | `.config/opencode/skills/*/SKILL.md` |
 
 VS Code and Copilot CLI share `~/.copilot/skills`, so their packs appear under
 both clients. The total counts each directory once. JSON files may contain

@@ -1,0 +1,15 @@
+{
+  "name": "@semantik-tech/adapters-opencode",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "OpenCode adapter — ~/.config/opencode/opencode.json mcp.servers and ~/.config/opencode/skills/",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@semantik-tech/adapters-shared": "0.1.0",
+    "@semantik-tech/manifest-schema": "0.1.0"
+  }
+}

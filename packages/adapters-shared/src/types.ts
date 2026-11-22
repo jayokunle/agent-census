@@ -43,7 +43,7 @@ export interface RenderContext {
   gatewayBaseUrl?: string;
   /** Target OS for WritePlan path resolution (defaults to host OS in tests). */
   targetOs?: TargetOs;
-  /** Existing native config for merge render (Claude ~/.claude.json, Gemini settings.json). */
+  /** Existing native config for merge render (Claude ~/.claude.json, Gemini settings.json, Antigravity mcp_config.json). */
   existingConfig?: unknown;
 }
 

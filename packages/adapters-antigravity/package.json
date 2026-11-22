@@ -1,0 +1,15 @@
+{
+  "name": "@semantik-tech/adapters-antigravity",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Google Antigravity adapter — ~/.gemini/config/mcp_config.json and ~/.gemini/config/skills/",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@semantik-tech/adapters-shared": "0.1.0",
+    "@semantik-tech/manifest-schema": "0.1.0"
+  }
+}
